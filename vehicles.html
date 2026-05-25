@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Available Vehicles - SBT</title>
+    <link rel="icon" href="assets/images/favicon.svg" type="image/svg+xml">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="assets/css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
+        <div class="container">
+            <a class="navbar-brand fw-bold d-flex align-items-center" href="index.html">
+                <img src="assets/images/sbt-logo.svg" alt="SBT" class="brand-logo">
+                SBT
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="vehicles.html">Vehicles</a></li>
+                    <li class="nav-item"><a class="nav-link" href="check-status.html">Check Status</a></li>
+                    <li class="nav-item"><a class="nav-link" href="index.html#how-it-works">How It Works</a></li>
+                    <li class="nav-item"><a class="nav-link" href="index.html#contact">Contact</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Page Header -->
+    <section class="page-header">
+        <div class="container text-center">
+            <h1 class="display-4 fw-bold">Our Vehicle Fleet</h1>
+            <p class="lead">Choose from our wide selection of quality vehicles</p>
+        </div>
+    </section>
+
+    <!-- Filters -->
+    <section class="py-4 bg-light border-bottom">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <div class="d-flex flex-wrap gap-2">
+                        <button class="btn btn-outline-primary filter-btn active" data-filter="all">All</button>
+                        <button class="btn btn-outline-primary filter-btn" data-filter="Sedan">Sedan</button>
+                        <button class="btn btn-outline-primary filter-btn" data-filter="SUV">SUV</button>
+                        <button class="btn btn-outline-primary filter-btn" data-filter="Hatchback">Hatchback</button>
+                        <button class="btn btn-outline-primary filter-btn" data-filter="Truck">Truck</button>
+                    </div>
+                </div>
+                <div class="col-md-4 mt-3 mt-md-0">
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                        <input type="text" id="searchInput" class="form-control" placeholder="Search vehicles...">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Vehicle Grid -->
+    <section class="py-5">
+        <div class="container">
+            <div id="vehicleGrid" class="row g-4">
+                <!-- Vehicles loaded dynamically via API -->
+                <div class="col-12 text-center py-5">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2 text-muted">Loading vehicles...</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Vehicle Details Modal -->
+    <div class="modal fade" id="vehicleDetailsModal" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="vehicleDetailsTitle">Vehicle Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <!-- Large Image Gallery -->
+                        <div class="col-lg-8">
+                            <div class="vehicle-detail-slider">
+                                <div id="detailSlider" class="detail-slider-container" style="position: relative; width: 100%; height: 400px; background: #f3f4f8; border-radius: 12px; overflow: hidden; margin-bottom: 15px;">
+                                    <!-- Images loaded here -->
+                                </div>
+                                <div class="d-flex gap-2" id="detailThumbnails" style="overflow-x: auto; padding: 10px 0;">
+                                    <!-- Thumbnails loaded here -->
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Details Panel -->
+                        <div class="col-lg-4">
+                            <h3 id="detailVehicleName"></h3>
+                            <div class="mb-3">
+                                <span class="badge bg-primary" id="detailVehicleType"></span>
+                                <span class="badge bg-secondary" id="detailVehicleYear"></span>
+                            </div>
+                            <div class="mb-4">
+                                <h4 class="text-primary" id="detailPriceDisplay"></h4>
+                                <p class="text-muted" id="detailMonthlyDisplay"></p>
+                            </div>
+                            <div class="vehicle-detail-specs">
+                                <div class="spec-item mb-3">
+                                    <strong><i class="bi bi-calendar text-primary"></i> Year</strong>
+                                    <p id="detailYear"></p>
+                                </div>
+                                <div class="spec-item mb-3">
+                                    <strong><i class="bi bi-speedometer2 text-primary"></i> Mileage</strong>
+                                    <p id="detailMileage"></p>
+                                </div>
+                                <div class="spec-item mb-3">
+                                    <strong><i class="bi bi-fuel-pump text-primary"></i> Fuel Type</strong>
+                                    <p id="detailFuelType"></p>
+                                </div>
+                                <div class="spec-item mb-3">
+                                    <strong><i class="bi bi-gear text-primary"></i> Transmission</strong>
+                                    <p id="detailTransmission"></p>
+                                </div>
+                                <div class="spec-item mb-3">
+                                    <strong><i class="bi bi-person-check text-primary"></i> Seats</strong>
+                                    <p id="detailSeats"></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mt-4" id="descriptionRow" style="display: none;">
+                        <div class="col-12">
+                            <h5>Description</h5>
+                            <p id="detailDescription"></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <a href="#" id="detailApplyBtn" class="btn btn-primary">
+                        Apply Now <i class="bi bi-arrow-right ms-1"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-white py-4">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5 class="fw-bold"><img src="assets/images/sbt-logo.svg" alt="SBT" class="brand-logo">SBT</h5>
+                    <p class="text-muted">Your trusted partner in rent-to-own vehicle solutions.</p>
+                </div>
+                <div class="col-md-3">
+                    <h6>Quick Links</h6>
+                    <ul class="list-unstyled">
+                        <li><a href="vehicles.html" class="text-decoration-none text-muted">Vehicles</a></li>
+                        <li><a href="index.html#how-it-works" class="text-decoration-none text-muted">How It Works</a></li>
+                        <li><a href="#" class="text-decoration-none text-muted">Terms & Conditions</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-3">
+                    <h6>Follow Us</h6>
+                    <div class="d-flex gap-3">
+                        <a href="#" class="text-white"><i class="bi bi-facebook fs-5"></i></a>
+                        <a href="#" class="text-white"><i class="bi bi-twitter-x fs-5"></i></a>
+                        <a href="#" class="text-white"><i class="bi bi-instagram fs-5"></i></a>
+                    </div>
+                </div>
+            </div>
+            <hr class="my-3">
+            <p class="text-center text-muted mb-0">&copy; 2026 SBT. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="config/supabase.js"></script>
+    <script src="assets/js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View Application - SBT Admin</title>
+    <link rel="icon" href="../assets/images/favicon.svg" type="image/svg+xml">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="../assets/css/admin.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../config/supabase.js"></script>
+</head>
+<body>
+    <div class="admin-wrapper">
+        <nav class="admin-sidebar">
+            <div class="sidebar-header">
+                <h5 class="fw-bold"><img src="../assets/images/sbt-logo.svg" alt="SBT" class="brand-logo">SBT</h5>
+                <small class="text-muted">Admin Panel</small>
+            </div>
+            <ul class="sidebar-nav">
+                <li><a href="dashboard.html"><i class="bi bi-speedometer2 me-2"></i>Dashboard</a></li>
+                <li><a href="login.html" id="logoutBtn2"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
+            </ul>
+            <div class="sidebar-footer">
+                <small>Logged in as <strong id="adminName2">Admin</strong></small>
+            </div>
+        </nav>
+
+        <main class="admin-content">
+            <div class="container-fluid p-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2 class="fw-bold"><i class="bi bi-file-text me-2"></i>Application <span id="appId">#?</span></h2>
+                    <a href="dashboard.html" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left me-1"></i> Back to Dashboard
+                    </a>
+                </div>
+
+                <div id="alertMsg" class="alert d-none"></div>
+
+                <div id="appContent">
+                    <div class="text-center py-5">
+                        <div class="spinner-border text-primary" role="status"></div>
+                        <p class="mt-2 text-muted">Loading application...</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Check auth
+        async function checkAuth() {
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (!session) {
+                window.location.href = 'login.html';
+                return null;
+            }
+            document.getElementById('adminName2').textContent = session.user.email || 'Admin';
+            return session;
+        }
+
+        // Get ID from URL
+        const params = new URLSearchParams(window.location.search);
+        const appId = params.get('id');
+
+        async function loadApplication() {
+            if (!appId) {
+                document.getElementById('appContent').innerHTML =
+                    '<div class="alert alert-danger">No application ID provided.</div>';
+                return;
+            }
+
+            document.getElementById('appId').textContent = `#${appId}`;
+
+            try {
+                const { data: app, error } = await supabaseClient
+                    .from('applications')
+                    .select(`
+                        *,
+                        vehicles:vehicle_id (name, type, year)
+                    `)
+                    .eq('id', appId)
+                    .single();
+
+                if (error) throw error;
+                if (!app) throw new Error('Application not found');
+
+                renderApplication(app);
+
+            } catch (err) {
+                document.getElementById('appContent').innerHTML =
+                    `<div class="alert alert-danger">${err.message}</div>`;
+            }
+        }
+
+        function renderApplication(app) {
+            const statusBadge = app.status === 'approved' ? 'success' :
+                                app.status === 'rejected' ? 'danger' : 'warning';
+            const feeBadge = app.admin_fee_paid ? 'success' : 'warning';
+            const feeText = app.admin_fee_paid ? 'Paid ✓ ($30.00)' : 'Pending Payment ($30.00)';
+            const vehicleName = app.vehicles ? `${app.vehicles.name} (${app.vehicles.year})` : 'Unknown';
+
+            document.getElementById('appContent').innerHTML = `
+                <div class="row g-4">
+                    <div class="col-lg-6">
+                        <div class="card border-0 shadow-sm rounded-4 h-100">
+                            <div class="card-header bg-white border-0 pt-4 px-4">
+                                <h5 class="fw-bold mb-0"><i class="bi bi-person-fill me-2 text-primary"></i>Personal Information</h5>
+                            </div>
+                            <div class="card-body p-4">
+                                <table class="table table-borderless">
+                                    <tr><td class="text-muted">Name</td><td class="fw-medium">${app.first_name} ${app.surname}</td></tr>
+                                    <tr><td class="text-muted">National ID</td><td class="fw-medium">${app.national_id}</td></tr>
+                                    <tr><td class="text-muted">Date of Birth</td><td class="fw-medium">${new Date(app.dob).toLocaleDateString()}</td></tr>
+                                    <tr><td class="text-muted">Occupation</td><td class="fw-medium">${app.occupation || 'N/A'}</td></tr>
+                                    <tr><td class="text-muted">Contact</td><td class="fw-medium">${app.contact_number}</td></tr>
+                                    <tr><td class="text-muted">Address</td><td class="fw-medium">${app.residential_address || 'N/A'}</td></tr>
+                                    <tr><td class="text-muted">Marital Status</td><td class="fw-medium">${app.marital_status || 'N/A'}</td></tr>
+                                    <tr><td class="text-muted">Gender</td><td class="fw-medium">${app.gender || 'N/A'}</td></tr>
+                                    <tr><td class="text-muted">Religion</td><td class="fw-medium">${app.religion || 'N/A'}</td></tr>
+                                    <tr><td class="text-muted">Vehicle Applied</td><td class="fw-medium">${vehicleName}</td></tr>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-6">
+                        <div class="card border-0 shadow-sm rounded-4 mb-4">
+                            <div class="card-header bg-white border-0 pt-4 px-4">
+                                <h5 class="fw-bold mb-0"><i class="bi bi-people-fill me-2 text-primary"></i>Next of Kin</h5>
+                            </div>
+                            <div class="card-body p-4">
+                                <table class="table table-borderless">
+                                    <tr><td class="text-muted">Name</td><td class="fw-medium">${app.kin_name || ''} ${app.kin_surname || ''}</td></tr>
+                                    <tr><td class="text-muted">Contact</td><td class="fw-medium">${app.kin_contact || 'N/A'}</td></tr>
+                                    <tr><td class="text-muted">Address</td><td class="fw-medium">${app.kin_address || 'N/A'}</td></tr>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="card border-0 shadow-sm rounded-4 mb-4">
+                            <div class="card-header bg-white border-0 pt-4 px-4">
+                                <h5 class="fw-bold mb-0"><i class="bi bi-file-earmark-text me-2 text-primary"></i>Uploaded Document</h5>
+                            </div>
+                            <div class="card-body p-4">
+                                ${app.document_url ? `
+                                    <div class="d-flex align-items-center p-3 bg-light rounded-3">
+                                        <i class="bi bi-file-earmark-check fs-1 text-success me-3"></i>
+                                        <div>
+                                            <p class="mb-0 fw-medium">Document Uploaded</p>
+                                            <small class="text-muted">${app.document_url.split('/').pop()}</small>
+                                        </div>
+                                        <a href="${app.document_url}" target="_blank" class="btn btn-sm btn-primary ms-auto">
+                                            <i class="bi bi-eye me-1"></i> View
+                                        </a>
+                                    </div>
+                                ` : '<p class="text-muted mb-0">No document uploaded.</p>'}
+                            </div>
+                        </div>
+
+                        <div class="card border-0 shadow-sm rounded-4 mb-4">
+                            <div class="card-header bg-white border-0 pt-4 px-4">
+                                <h5 class="fw-bold mb-0"><i class="bi bi-credit-card me-2 text-primary"></i>Payment Status</h5>
+                            </div>
+                            <div class="card-body p-4">
+                                <div class="d-flex align-items-center">
+                                    <span class="badge bg-${feeBadge} fs-6 p-2">
+                                        <i class="bi ${app.admin_fee_paid ? 'bi-check-circle' : 'bi-clock'} me-1"></i> ${feeText}
+                                    </span>
+                                </div>
+                                <p class="text-muted small mt-2 mb-0">
+                                    <i class="bi bi-info-circle me-1"></i>
+                                    Upon approval, the applicant pays a US \$30.00 administration fee. After payment, the vehicle is delivered to the nearest police station for paperwork. A company representative, accompanied by a police officer, will then visit the applicant's residence to finalize the handover.
+                                </p>
+                            </div>
+                        </div>
+
+                        ${app.status === 'pending' ? `
+                            <div class="card border-0 shadow-sm rounded-4">
+                                <div class="card-body p-4">
+                                    <h5 class="fw-bold mb-3"><i class="bi bi-shield-check me-2 text-primary"></i>Review Application</h5>
+                                    <div class="d-flex gap-3">
+                                        <button onclick="updateStatus(${app.id}, 'approve')" class="btn btn-success btn-lg w-100">
+                                            <i class="bi bi-check-circle me-2"></i> Approve
+                                        </button>
+                                        <button onclick="updateStatus(${app.id}, 'reject')" class="btn btn-danger btn-lg w-100">
+                                            <i class="bi bi-x-circle me-2"></i> Reject
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        ` : `
+                            <div class="card border-0 shadow-sm rounded-4">
+                                <div class="card-body p-4">
+                                    <h5 class="fw-bold mb-3"><i class="bi bi-shield-check me-2 text-primary"></i>Application ${app.status.charAt(0).toUpperCase() + app.status.slice(1)}</h5>
+                                    <p class="mb-0 text-muted">This application has been <strong>${app.status}</strong>. No further actions available.</p>
+                                </div>
+                            </div>
+                        `}
+                    </div>
+                </div>
+            `;
+        }
+
+        async function updateStatus(id, action) {
+            const confirmMsg = action === 'approve'
+                ? 'Approve this application? The applicant will be notified to pay the US $30.00 admin fee. Vehicle will be delivered to the nearest police station upon payment confirmation.'
+                : 'Reject this application? This action cannot be undone.';
+
+            if (!confirm(confirmMsg)) return;
+
+            const newStatus = action === 'approve' ? 'approved' : 'rejected';
+
+            try {
+                const { error } = await supabaseClient
+                    .from('applications')
+                    .update({ status: newStatus, updated_at: new Date().toISOString() })
+                    .eq('id', id);
+
+                if (error) throw error;
+
+                const alertMsg = document.getElementById('alertMsg');
+                alertMsg.className = 'alert alert-success alert-dismissible fade show';
+                alertMsg.innerHTML = `<i class="bi bi-check-circle me-2"></i>Application ${newStatus} successfully! <button type="button" class="btn-close" data-bs-dismiss="alert"></button>`;
+                alertMsg.classList.remove('d-none');
+
+                // Reload
+                loadApplication();
+
+            } catch (err) {
+                const alertMsg = document.getElementById('alertMsg');
+                alertMsg.className = 'alert alert-danger alert-dismissible fade show';
+                alertMsg.innerHTML = `<i class="bi bi-exclamation-triangle me-2"></i>${err.message} <button type="button" class="btn-close" data-bs-dismiss="alert"></button>`;
+                alertMsg.classList.remove('d-none');
+            }
+        }
+
+        // Logout
+        document.getElementById('logoutBtn2').addEventListener('click', async (e) => {
+            e.preventDefault();
+            await supabaseClient.auth.signOut();
+            sessionStorage.removeItem('supabase_session');
+            window.location.href = 'login.html';
+        });
+
+        // Init
+        checkAuth().then(session => {
+            if (session) loadApplication();
+        });
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

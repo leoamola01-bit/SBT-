@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Application Submitted - SBT</title>
+    <link rel="icon" href="assets/images/favicon.svg" type="image/svg+xml">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="assets/css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
+        <div class="container">
+            <a class="navbar-brand fw-bold d-flex align-items-center" href="index.html">
+                <img src="assets/images/sbt-logo.svg" alt="SBT" class="brand-logo">
+                SBT
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="vehicles.html">Vehicles</a></li>
+                    <li class="nav-item"><a class="nav-link" href="check-status.html">Check Status</a></li>
+                    <li class="nav-item"><a class="nav-link" href="index.html#how-it-works">How It Works</a></li>
+                    <li class="nav-item"><a class="nav-link" href="index.html#contact">Contact</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <section class="page-header">
+        <div class="container text-center">
+            <h1 class="display-4 fw-bold">Application Submitted</h1>
+        </div>
+    </section>
+
+    <section class="py-5">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-8">
+                    <div class="alert alert-info text-center mb-4">
+                        <strong>Your application ID:</strong> <span id="successApplicationNumber">Loading...</span>
+                        <div id="successHelpText" class="small text-muted">Use this ID on the customer dashboard to track your application status.</div>
+                    </div>
+                </div>
+            </div>
+            <div class="row justify-content-center">
+                <div class="col-lg-6">
+                    <div class="card border-0 shadow-lg rounded-4 text-center p-5">
+                        <div class="mb-4">
+                            <div class="status-icon mx-auto mb-3">
+                                <i class="bi bi-check-circle-fill text-success" style="font-size: 5rem;"></i>
+                            </div>
+                            <h2 class="fw-bold">Application Submitted!</h2>
+                            <p class="text-muted">Your application has been received successfully.</p>
+                        </div>
+                        <div class="alert alert-info text-start">
+                            <h6 class="alert-heading"><i class="bi bi-info-circle me-2"></i>What happens next?</h6>
+                            <ol class="mb-0 ps-3">
+                                <li>Our team will review your application within 24-48 hours.</li>
+                                <li>You will be notified of the approval status.</li>
+                                <li>Upon approval, you will be required to pay a one-time administration fee of <strong>US $30.00</strong>.</li>
+                                <li>After payment confirmation, the vehicle will be delivered to the nearest police station in your area for official paperwork.</li>
+                                <li>Once paperwork is completed at the police station, a company representative accompanied by a police officer will visit your residential address to finalize the handover.</li>
+                            </ol>
+                        </div>
+                        <div class="d-flex justify-content-center gap-3 mt-3">
+                            <a href="vehicles.html" class="btn btn-primary btn-lg px-4">
+                                <i class="bi bi-car-front me-2"></i>Browse More Vehicles
+                            </a>
+                            <a href="index.html" class="btn btn-outline-secondary btn-lg px-4">
+                                <i class="bi bi-house me-2"></i>Home
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="config/supabase.js"></script>
+    <script src="assets/js/main.js"></script>
+</body>
+</html>

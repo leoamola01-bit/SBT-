@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login - SBT</title>
+    <link rel="icon" href="../assets/images/favicon.svg" type="image/svg+xml">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="../assets/css/admin.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../config/supabase.js"></script>
+</head>
+<body class="login-page">
+    <div class="login-container">
+        <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="card-body p-5">
+                <div class="text-center mb-4">
+                    <div class="brand-icon mb-3">
+                        <i class="bi bi-car-front-fill text-primary" style="font-size: 3rem;"></i>
+                    </div>
+                    <h3 class="fw-bold">SBT Admin</h3>
+                    <p class="text-muted">Sign in to manage applications</p>
+                </div>
+
+                <div id="errorMsg" class="alert alert-danger d-none"></div>
+
+                <form id="loginForm">
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">Email Address</label>
+                        <input type="email" class="form-control form-control-lg" id="email" placeholder="admin@sbt.com" required>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label fw-medium">Password</label>
+                        <input type="password" class="form-control form-control-lg" id="password" placeholder="Enter password" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-lg w-100 rounded-pill">
+                        <i class="bi bi-shield-lock me-2"></i>Sign In
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const loginForm = document.getElementById('loginForm');
+        const errorMsg = document.getElementById('errorMsg');
+
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            errorMsg.classList.add('d-none');
+
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const btn = loginForm.querySelector('button');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Signing in...';
+
+            try {
+                const { data, error } = await supabaseClient.auth.signInWithPassword({
+                    email: email,
+                    password: password
+                });
+
+                if (error) throw error;
+
+                // Store session in sessionStorage
+                sessionStorage.setItem('supabase_session', JSON.stringify(data.session));
+                window.location.href = 'dashboard.html';
+
+            } catch (err) {
+                errorMsg.textContent = err.message.includes('Invalid login credentials')
+                    ? 'Invalid email or password. Please try again.'
+                    : err.message;
+                errorMsg.classList.remove('d-none');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-shield-lock me-2"></i>Sign In';
+            }
+        });
+    </script>
+</body>
+</html>

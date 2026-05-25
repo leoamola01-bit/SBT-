@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SBT - Rent to Own Vehicles</title>
+    <link rel="icon" href="assets/images/favicon.svg" type="image/svg+xml">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="assets/css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
+        <div class="container">
+            <a class="navbar-brand fw-bold d-flex align-items-center" href="index.html">
+                <img src="assets/images/sbt-logo.svg" alt="SBT" class="brand-logo">
+                SBT
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link active" href="index.html">Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="vehicles.html">Vehicles</a></li>
+                    <li class="nav-item"><a class="nav-link" href="check-status.html">Check Status</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#how-it-works">How It Works</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#contact">Contact</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="container">
+            <div class="row align-items-center min-vh-100">
+                <div class="col-lg-6 hero-content">
+                    <h1 class="display-3 fw-bold mb-3 animate-fade-in">Drive Today,<br>Own Tomorrow</h1>
+                    <p class="lead mb-4 animate-fade-in-delay">Get behind the wheel of your dream vehicle today with our flexible rent-to-own plans. No hidden fees, no surprises.</p>
+                    <div class="d-flex gap-3 animate-fade-in-delay-2">
+                        <a href="vehicles.html" class="btn btn-primary btn-lg px-4 py-3">
+                            <i class="bi bi-search me-2"></i>Browse Vehicles
+                        </a>
+                        <a href="#how-it-works" class="btn btn-outline-light btn-lg px-4 py-3">
+                            <i class="bi bi-info-circle me-2"></i>Learn More
+                        </a>
+                    </div>
+                </div>
+                <div class="col-lg-6 animate-slide-in">
+                    <div class="hero-info-box p-4 rounded-4 shadow-lg bg-white text-start">
+                        <h4 class="fw-bold mb-3">What is Rent-to-Buy?</h4>
+                        <p class="text-muted mb-4">Rent-to-Buy gives you immediate vehicle use with a simple path to ownership. Start driving today, and make your first monthly installment only after 30 days.</p>
+                        <ul class="list-unstyled mb-4">
+                            <li class="mb-3"><i class="bi bi-check-circle-fill text-danger me-2"></i>Drive first, pay later — first payment due after 30 days.</li>
+                            <li class="mb-3"><i class="bi bi-check-circle-fill text-danger me-2"></i>Choose from recently imported vehicles and good second hand models.</li>
+                            <li class="mb-3"><i class="bi bi-check-circle-fill text-danger me-2"></i>Fast approval, police verification, and nationwide delivery.</li>
+                        </ul>
+                        <a href="vehicles.html" class="btn btn-outline-primary btn-lg">View Available Vehicles</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works -->
+    <section id="how-it-works" class="py-5 bg-light">
+        <div class="container py-5">
+            <div class="text-center mb-5">
+                <h2 class="display-5 fw-bold">How It Works</h2>
+                <p class="lead text-muted">Simple steps to get you driving</p>
+            </div>
+            <div class="row g-4">
+                <div class="col-md-3">
+                    <div class="step-card text-center p-4">
+                        <div class="step-number">1</div>
+                        <i class="bi bi-file-text display-4 text-primary mb-3"></i>
+                        <h4>Apply Online</h4>
+                        <p class="text-muted">Fill out our simple application form and submit your documents.</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="step-card text-center p-4">
+                        <div class="step-number">2</div>
+                        <i class="bi bi-check-circle display-4 text-primary mb-3"></i>
+                        <h4>Get Approved</h4>
+                        <p class="text-muted">Our team reviews your application and notifies you of approval.</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="step-card text-center p-4">
+                        <div class="step-number">3</div>
+                        <i class="bi bi-credit-card display-4 text-primary mb-3"></i>
+                        <h4>Pay Admin Fee</h4>
+                        <p class="text-muted">Upon approval, a one-time administration fee of US $30 is required.</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="step-card text-center p-4">
+                        <div class="step-number">4</div>
+                        <i class="bi bi-house-check display-4 text-primary mb-3"></i>
+                        <h4>Delivery & Verification</h4>
+                        <p class="text-muted">Vehicle delivered to your nearest police station for paperwork, followed by a home visit with an officer to finalize the handover.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="py-5">
+        <div class="container py-5">
+            <div class="row align-items-center">
+                <div class="col-lg-6 mb-4 mb-lg-0">
+                    <div class="p-4 rounded-4 shadow-lg bg-white">
+                        <h3 class="fw-bold mb-4">Our Vehicle Promise</h3>
+                        <p class="text-muted mb-4">We offer a mix of recently imported vehicles and quality second hand cars, all inspected and ready for immediate use.</p>
+                        <div class="d-flex align-items-start mb-3">
+                            <div class="me-3 text-primary"><i class="bi bi-globe2 fs-3"></i></div>
+                            <div>
+                                <h5 class="mb-1">Imported & Reliable</h5>
+                                <p class="text-muted mb-0">Choose from modern imported models and trusted high quality second hand vehicles.</p>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-start mb-3">
+                            <div class="me-3 text-primary"><i class="bi bi-speedometer2 fs-3"></i></div>
+                            <div>
+                                <h5 class="mb-1">Drive First, Pay Later</h5>
+                                <p class="text-muted mb-0">Your first monthly installment is due only after 30 days of using the vehicle.</p>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-start mb-3">
+                            <div class="me-3 text-primary"><i class="bi bi-shield-lock fs-3"></i></div>
+                            <div>
+                                <h5 class="mb-1">Verified Delivery</h5>
+                                <p class="text-muted mb-0">Delivery through police stations makes the handover safe and official.</p>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-start">
+                            <div class="me-3 text-primary"><i class="bi bi-hand-thumbs-up fs-3"></i></div>
+                            <div>
+                                <h5 class="mb-1">Affordable Plans</h5>
+                                <p class="text-muted mb-0">Flexible terms up to 18 months so you can budget comfortably.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6 ps-lg-5">
+                    <h2 class="display-6 fw-bold mb-4">Why Choose SBT?</h2>
+                    <div class="d-flex mb-3">
+                        <i class="bi bi-check-circle-fill text-primary fs-4 me-3"></i>
+                        <div>
+                            <h5>No Credit Check Required</h5>
+                            <p class="text-muted">We believe in second chances. Your credit history doesn't define you.</p>
+                        </div>
+                    </div>
+                    <div class="d-flex mb-3">
+                        <i class="bi bi-check-circle-fill text-primary fs-4 me-3"></i>
+                        <div>
+                            <h5>Flexible Payment Plans</h5>
+                            <p class="text-muted">Choose terms that fit your budget with options from 12 to 18 months.</p>
+                        </div>
+                    </div>
+                    <div class="d-flex mb-3">
+                        <i class="bi bi-check-circle-fill text-primary fs-4 me-3"></i>
+                        <div>
+                            <h5>Secure & Verified Process</h5>
+                            <p class="text-muted">All transactions are conducted with police verification for your safety.</p>
+                        </div>
+                    </div>
+                    <div class="d-flex mb-3">
+                        <i class="bi bi-check-circle-fill text-primary fs-4 me-3"></i>
+                        <div>
+                            <h5>Nationwide Delivery</h5>
+                            <p class="text-muted">We deliver to police stations across all major cities and towns.</p>
+                        </div>
+                    </div>
+                    <a href="vehicles.html" class="btn btn-primary btn-lg mt-3 px-4">Get Started Now</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials -->
+    <section class="py-5 bg-light">
+        <div class="container py-5">
+            <div class="text-center mb-5">
+                <h2 class="display-5 fw-bold">What Our Customers Say</h2>
+            </div>
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="testimonial-card p-4 bg-white rounded-4 shadow-sm">
+                        <div class="stars mb-3">
+                            <i class="bi bi-star-fill text-warning"></i>
+                            <i class="bi bi-star-fill text-warning"></i>
+                            <i class="bi bi-star-fill text-warning"></i>
+                            <i class="bi bi-star-fill text-warning"></i>
+                            <i class="bi bi-star-fill text-warning"></i>
+                        </div>
+                        <p class="mb-3">"The process was so smooth. I got approved within 24 hours and the police station delivery made me feel completely secure."</p>
+                        <div class="d-flex align-items-center">
+                            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width:45px;height:45px;font-weight:bold;">JM</div>
+                            <div class="ms-3">
+                                <h6 class="mb-0">John M.</h6>
+                                <small class="text-muted">Toyota Corolla</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="testimonial-card p-4 bg-white rounded-4 shadow-sm">
+                        <div class="stars mb-3">
+                            <i class="bi bi-star-fill text-warning"></i>
+                            <i class="bi bi-star-fill text-warning"></i>
+                            <i class="bi bi-star-fill text-warning"></i>
+                            <i class="bi bi-star-fill text-warning"></i>
+                            <i class="bi bi-star-fill text-warning"></i>
+                        </div>
+                        <p class="mb-3">"SBT made it possible for me to get a reliable SUV for my family. The $30 admin fee was nothing compared to the value I received."</p>
+                        <div class="d-flex align-items-center">
+                            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width:45px;height:45px;font-weight:bold;">SK</div>
+                            <div class="ms-3">
+                                <h6 class="mb-0">Sarah K.</h6>
+                                <small class="text-muted">Honda CR-V</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="testimonial-card p-4 bg-white rounded-4 shadow-sm">
+                        <div class="stars mb-3">
+                            <i class="bi bi-star-fill text-warning"></i>
+                            <i class="bi bi-star-fill text-warning"></i>
+                            <i class="bi bi-star-fill text-warning"></i>
+                            <i class="bi bi-star-fill text-warning"></i>
+                            <i class="bi bi-star-fill text-warning"></i>
+                        </div>
+                        <p class="mb-3">"The police verification process gave me peace of mind. The officer who came with the SBT rep was very professional."</p>
+                        <div class="d-flex align-items-center">
+                            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width:45px;height:45px;font-weight:bold;">DP</div>
+                            <div class="ms-3">
+                                <h6 class="mb-0">David P.</h6>
+                                <small class="text-muted">Ford Ranger</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section id="contact" class="py-5">
+        <div class="container py-5">
+            <div class="row">
+                <div class="col-lg-6 mx-auto text-center">
+                    <h2 class="display-5 fw-bold mb-4">Ready to Drive?</h2>
+                    <p class="lead mb-4">Have questions? Our team is here to help you every step of the way.</p>
+                    <div class="d-flex justify-content-center gap-4 mb-4">
+                        <div class="text-center">
+                            <i class="bi bi-telephone-fill fs-3 text-primary"></i>
+                            <p class="mb-0 mt-2">+263 77 640 2992</p>
+                        </div>
+                        <div class="text-center">
+                            <i class="bi bi-envelope-fill fs-3 text-primary"></i>
+                            <p class="mb-0 mt-2">info@sbt.com</p>
+                        </div>
+                        <div class="text-center">
+                            <i class="bi bi-geo-alt-fill fs-3 text-primary"></i>
+                            <p class="mb-0 mt-2">567 MOPANI RD, Victoria Falls</p>
+                        </div>
+                    </div>
+                    <a href="vehicles.html" class="btn btn-primary btn-lg px-5 py-3">
+                        <i class="bi bi-car-front me-2"></i>Browse Available Vehicles
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-white py-4">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5 class="fw-bold"><img src="assets/images/sbt-logo.svg" alt="SBT" class="brand-logo">SBT</h5>
+                    <p class="text-muted">Your trusted partner in rent-to-own vehicle solutions.</p>
+                </div>
+                <div class="col-md-3">
+                    <h6>Quick Links</h6>
+                    <ul class="list-unstyled">
+                        <li><a href="vehicles.html" class="text-decoration-none text-muted">Vehicles</a></li>
+                        <li><a href="#how-it-works" class="text-decoration-none text-muted">How It Works</a></li>
+                        <li><a href="#" class="text-decoration-none text-muted">Terms & Conditions</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-3">
+                    <h6>Follow Us</h6>
+                    <div class="d-flex gap-3">
+                        <a href="#" class="text-white"><i class="bi bi-facebook fs-5"></i></a>
+                        <a href="#" class="text-white"><i class="bi bi-twitter-x fs-5"></i></a>
+                        <a href="#" class="text-white"><i class="bi bi-instagram fs-5"></i></a>
+                    </div>
+                </div>
+            </div>
+            <hr class="my-3">
+            <p class="text-center text-muted mb-0">&copy; 2026 SBT. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="config/supabase.js"></script>
+    <script src="assets/js/main.js"></script>
+</body>
+</html>

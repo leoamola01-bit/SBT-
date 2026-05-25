@@ -1,0 +1,16 @@
+<svg width="800" height="520" viewBox="0 0 800 520" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="featureGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#8c0f10" />
+      <stop offset="100%" stop-color="#d71819" />
+    </linearGradient>
+  </defs>
+  <rect width="800" height="520" rx="40" ry="40" fill="#11101b" />
+  <path d="M160 340 H680 C700 340 720 360 720 380 V400 H680 C670 430 640 450 610 450 C580 450 550 430 540 400 H260 C250 430 220 450 190 450 C160 450 130 430 120 400 H80 V380 C80 360 100 340 120 340 Z" fill="url(#featureGradient)" />
+  <circle cx="240" cy="450" r="44" fill="#222" />
+  <circle cx="240" cy="450" r="20" fill="#fff" />
+  <circle cx="560" cy="450" r="44" fill="#222" />
+  <circle cx="560" cy="450" r="20" fill="#fff" />
+  <rect x="210" y="260" width="380" height="90" rx="30" ry="30" fill="#ffffff22" />
+  <rect x="220" y="220" width="160" height="75" rx="40" ry="40" fill="#ffffff22" />
+</svg>
