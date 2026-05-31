@@ -406,3 +406,4 @@ This project is provided as-is for the SBT rent-to-own platform.
 **Last Updated**: May 3, 2026  
 **Version**: 2.0 (Supabase)
 # SBT-
+# SBT-
