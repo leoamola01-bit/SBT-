@@ -74,6 +74,22 @@
                             <strong>Application Created</strong>
                             <p id="statusCreatedAt" class="mb-0"></p>
                         </div>
+                        <div id="approvalSection" class="mb-3 d-none">
+                            <h6 class="mb-2">Application Approved — Next Steps</h6>
+                            <p class="mb-2 text-muted" id="approvalMessage">Your application has been approved. Please follow the steps below to complete payment and collection.</p>
+                            <ul class="mb-2">
+                                <li>Pay the administration fee of <strong>US $30.00</strong>.</li>
+                                <li>After confirmation of the admin fee payment, the vehicle will be delivered to the nearest police station in your area for paperwork and handover.</li>
+                                <li>At the police station bring: <strong>3 passport-sized photos</strong>, a <strong>certified copy of your national ID</strong>, and <strong>proof of residence</strong>.</li>
+                            </ul>
+                            <p class="small text-muted mb-0">Your first monthly installment is due on or before the date shown below (30 days after application creation).</p>
+                            <p class="fw-semibold mt-2" id="firstPaymentDue"></p>
+                        </div>
+
+                        <div id="paymentsSection" class="mb-3 d-none">
+                            <h6 class="mb-2">Payment Schedule</h6>
+                            <div id="paymentsTableWrapper"></div>
+                        </div>
                         <div>
                             <a href="apply.html" class="btn btn-outline-primary">Submit a New Application</a>
                         </div>

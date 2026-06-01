@@ -77,7 +77,7 @@ async function loadVehicles(filter = 'all', search = '') {
             <h5 class="vehicle-name">${vehicle.name}</h5>
             <div class="vehicle-specs">
               <span><i class="bi bi-calendar"></i> ${vehicle.year}</span>
-              <span><i class="bi bi-speedometer2"></i> ${vehicle.mileage || 'N/A'}</span>
+              <span><i class="bi bi-speedometer2"></i> ${normalizeMileageDisplay(vehicle.mileage) || 'N/A'}</span>
               <span><i class="bi bi-fuel-pump"></i> ${vehicle.fuel_type || 'N/A'}</span>
               <span><i class="bi bi-gear"></i> ${vehicle.transmission || 'N/A'}</span>
             </div>
@@ -136,7 +136,7 @@ function showVehicleDetails(vehicle) {
   document.getElementById('detailVehicleType').textContent = vehicle.type;
   document.getElementById('detailVehicleYear').textContent = vehicle.year;
   document.getElementById('detailYear').textContent = vehicle.year;
-  document.getElementById('detailMileage').textContent = (vehicle.mileage || 'N/A') + ' miles';
+  document.getElementById('detailMileage').textContent = normalizeMileageDisplay(vehicle.mileage);
   document.getElementById('detailFuelType').textContent = vehicle.fuel_type || 'N/A';
   document.getElementById('detailTransmission').textContent = vehicle.transmission || 'N/A';
   document.getElementById('detailSeats').textContent = (vehicle.seats || 'N/A') + ' seats';
@@ -263,20 +263,65 @@ async function trackWebsiteVisit() {
   if (!window.supabaseClient) return;
 
   const tokenKey = 'sbt_visitor_token';
+  const countedKey = 'sbt_visit_session_counted';
+  const tabStorageKey = 'sbt_visit_tab_data';
   let visitorToken = localStorage.getItem(tokenKey);
+
+  const navEntry = performance?.getEntriesByType?.('navigation')?.[0];
+  const navigationType = navEntry?.type || (performance?.navigation?.type === 1 ? 'reload' : 'navigate');
+  const isReload = navigationType === 'reload';
+  const isBackForward = navigationType === 'back_forward';
+
+  let tabData = {};
+  if (window.name) {
+    try {
+      tabData = JSON.parse(window.name) || {};
+    } catch (err) {
+      tabData = {};
+    }
+  }
+
+  const alreadyCounted = Boolean(
+    tabData[countedKey] || localStorage.getItem(countedKey) || sessionStorage.getItem(countedKey)
+  );
+
+  if (alreadyCounted && !isReload) {
+    return;
+  }
+
   if (!visitorToken) {
     visitorToken = crypto?.randomUUID?.() || `visitor_${Date.now()}_${Math.random().toString(36).slice(2)}`;
     localStorage.setItem(tokenKey, visitorToken);
   }
 
+  // Track once per tab session across page navigations and file-based origins.
+  if (!isReload) {
+    localStorage.setItem(countedKey, '1');
+    sessionStorage.setItem(countedKey, '1');
+    tabData[countedKey] = true;
+    try {
+      window.name = JSON.stringify(tabData);
+    } catch (err) {
+      // Ignore failures from window.name serialization.
+    }
+  }
+
   try {
-    await window.supabaseClient
+    const { error } = await window.supabaseClient
       .from('website_visits')
       .insert({
         visitor_token: visitorToken,
         page_path: window.location.pathname,
         user_agent: navigator.userAgent
       });
+
+    if (error) {
+      if (error.status === 404 || String(error.message).toLowerCase().includes('not found')) {
+        console.warn('Visitor tracking failed because the website_visits table is not available in Supabase.');
+      } else {
+        console.warn('Visitor tracking failed:', error.message || error);
+      }
+    }
   } catch (err) {
     console.warn('Visitor tracking failed:', err.message || err);
   }
@@ -331,7 +376,7 @@ function initStatusCheck() {
     try {
       const { data, error } = await window.supabaseClient
         .from('applications')
-        .select('application_number,status,created_at,vehicle_id')
+        .select('*')
         .ilike('application_number', applicationNumber)
         .single();
 
@@ -363,6 +408,49 @@ function initStatusCheck() {
       statusBadge.className = 'badge ' + (data.status === 'approved' ? 'bg-success' : data.status === 'rejected' ? 'bg-danger' : 'bg-warning text-dark');
       const createdAtDate = new Date(data.created_at);
       statusCreatedAt.textContent = createdAtDate.toLocaleString();
+
+      // If approved, show next steps and payment schedule
+      const approvalSection = document.getElementById('approvalSection');
+      const paymentsSection = document.getElementById('paymentsSection');
+      const firstPaymentDueEl = document.getElementById('firstPaymentDue');
+      const paymentsWrapper = document.getElementById('paymentsTableWrapper');
+
+      if (data.status === 'approved') {
+        approvalSection.classList.remove('d-none');
+        paymentsSection.classList.remove('d-none');
+
+        const firstDue = new Date(data.created_at);
+        firstDue.setDate(firstDue.getDate() + 30);
+        firstPaymentDueEl.textContent = firstDue.toLocaleDateString();
+
+        // build payments summary
+        let monthly = 0;
+        if (data.vehicle_id) {
+          const { data: vehicleData } = await window.supabaseClient
+            .from('vehicles')
+            .select('monthly_payment')
+            .eq('id', data.vehicle_id)
+            .single();
+          if (vehicleData?.monthly_payment) monthly = Number(vehicleData.monthly_payment);
+        }
+
+        const adminPaid = !!data.admin_fee_paid;
+        const installments = Array.isArray(data.installments_paid) ? data.installments_paid.slice() : (data.installments_paid || []);
+        while (installments.length < 18) installments.push(false);
+
+        let html = '<div class="mb-2"><strong>Administration Fee</strong> — US $30.00 — <span class="fw-semibold">' + (adminPaid ? 'Paid' : 'Pending') + '</span></div>';
+        html += '<table class="table table-sm mt-2"><thead><tr><th>Installment</th><th>Amount</th><th>Due Date</th><th>Status</th></tr></thead><tbody>';
+        for (let i = 0; i < 18; i++) {
+          const due = new Date(firstDue);
+          due.setMonth(due.getMonth() + i);
+          html += `<tr><td>Month ${i+1}</td><td>US $${Number(monthly).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</td><td>${due.toLocaleDateString()}</td><td>${installments[i] ? 'Paid' : 'Pending'}</td></tr>`;
+        }
+        html += '</tbody></table>';
+        paymentsWrapper.innerHTML = html;
+      } else {
+        approvalSection.classList.add('d-none');
+        paymentsSection.classList.add('d-none');
+      }
     } catch (err) {
       console.error('Status lookup error:', err);
       resultCard.classList.add('d-none');
@@ -643,4 +731,29 @@ async function initApplicationForm() {
       submitBtn.innerHTML = 'Submit Application';
     }
   });
+}
+
+function normalizeMileageDisplay(raw) {
+  if (!raw) return 'N/A';
+  try {
+    const s = String(raw).trim();
+    // If already contains km, return normalized number + ' km'
+    if (/km/i.test(s)) {
+      return s.replace(/\s+/g, ' ');
+    }
+    // If contains miles/mi, extract number and convert
+    const miMatch = s.match(/([\d,\.]+)/);
+    if (miMatch) {
+      let num = parseFloat(miMatch[1].replace(/,/g, ''));
+      if (/mi|mile/i.test(s)) {
+        const km = Math.round(num * 1.60934);
+        return `${km.toLocaleString()} km`;
+      }
+      // If just a number assume it's already km
+      return `${Math.round(num).toLocaleString()} km`;
+    }
+    return s + ' km';
+  } catch (e) {
+    return String(raw);
+  }
 }

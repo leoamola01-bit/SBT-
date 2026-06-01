@@ -92,6 +92,10 @@
                     </div>
                 </div>
 
+                <div id="analyticsWarning" class="alert alert-warning d-none" role="alert">
+                    Analytics is not configured. The <code>website_visits</code> table may be missing or inaccessible in Supabase.
+                </div>
+
                 <!-- Filter Buttons -->
                 <div class="d-flex gap-2 mb-4 flex-wrap">
                     <button class="btn btn-outline-secondary filter-status active" data-status="all">
@@ -351,6 +355,25 @@
             const price = Number(document.getElementById('vehiclePrice').value);
             const monthly_payment = Number(document.getElementById('vehicleMonthly').value);
             const mileage = document.getElementById('vehicleMileage').value.trim();
+            function normalizeMileageForSave(raw) {
+                if (!raw) return null;
+                const s = String(raw).trim();
+                const numMatch = s.match(/([\d,\.]+)/);
+                if (!numMatch) return s;
+                let num = parseFloat(numMatch[1].replace(/,/g, ''));
+                if (/mi|mile/i.test(s)) {
+                    // convert miles to km
+                    const km = Math.round(num * 1.60934);
+                    return `${km} km`;
+                }
+                // if it already mentions km, keep numeric + km
+                if (/km/i.test(s)) {
+                    return `${Math.round(num)} km`;
+                }
+                // assume input is in km
+                return `${Math.round(num)} km`;
+            }
+            const normalizedMileage = normalizeMileageForSave(mileage);
             const fuel_type = document.getElementById('vehicleFuel').value.trim();
             const transmission = document.getElementById('vehicleTransmission').value.trim();
             const engine_capacity = document.getElementById('vehicleEngine').value.trim();
@@ -385,7 +408,7 @@
                         year,
                         fuel_type,
                         transmission,
-                        mileage,
+                        mileage: normalizedMileage,
                         price,
                         monthly_payment,
                         description,
@@ -545,6 +568,11 @@
         }
 
         async function loadVisitorStats() {
+            const dailyEl = document.getElementById('dailyVisits');
+            const weeklyEl = document.getElementById('weeklyVisits');
+            const monthlyEl = document.getElementById('monthlyVisits');
+            const yearlyEl = document.getElementById('yearlyVisits');
+
             try {
                 const now = new Date();
                 const dailyStart = new Date(now);
@@ -557,19 +585,45 @@
                 const monthlyStart = new Date(now.getFullYear(), now.getMonth(), 1);
                 const yearlyStart = new Date(now.getFullYear(), 0, 1);
 
-                const [dailyRes, weeklyRes, monthlyRes, yearlyRes] = await Promise.all([
+                const results = await Promise.allSettled([
                     supabaseClient.from('website_visits').select('id', { count: 'exact', head: true }).gte('created_at', dailyStart.toISOString()),
                     supabaseClient.from('website_visits').select('id', { count: 'exact', head: true }).gte('created_at', weeklyStart.toISOString()),
                     supabaseClient.from('website_visits').select('id', { count: 'exact', head: true }).gte('created_at', monthlyStart.toISOString()),
                     supabaseClient.from('website_visits').select('id', { count: 'exact', head: true }).gte('created_at', yearlyStart.toISOString())
                 ]);
 
-                document.getElementById('dailyVisits').textContent = dailyRes.count || 0;
-                document.getElementById('weeklyVisits').textContent = weeklyRes.count || 0;
-                document.getElementById('monthlyVisits').textContent = monthlyRes.count || 0;
-                document.getElementById('yearlyVisits').textContent = yearlyRes.count || 0;
+                const [dailyRes, weeklyRes, monthlyRes, yearlyRes] = results.map((result) => {
+                    if (result.status === 'fulfilled') return result.value;
+                    console.warn('Visitor analytics query failed:', result.reason);
+                    return { error: result.reason, count: null };
+                });
+
+                const fallbackText = 'N/A';
+                let analyticsError = false;
+
+                dailyEl.textContent = dailyRes && !dailyRes.error ? dailyRes.count || 0 : fallbackText;
+                if (dailyRes && dailyRes.error) analyticsError = true;
+                weeklyEl.textContent = weeklyRes && !weeklyRes.error ? weeklyRes.count || 0 : fallbackText;
+                if (weeklyRes && weeklyRes.error) analyticsError = true;
+                monthlyEl.textContent = monthlyRes && !monthlyRes.error ? monthlyRes.count || 0 : fallbackText;
+                if (monthlyRes && monthlyRes.error) analyticsError = true;
+                yearlyEl.textContent = yearlyRes && !yearlyRes.error ? yearlyRes.count || 0 : fallbackText;
+                if (yearlyRes && yearlyRes.error) analyticsError = true;
+
+                const warningEl = document.getElementById('analyticsWarning');
+                if (analyticsError) {
+                    warningEl.classList.remove('d-none');
+                    warningEl.textContent = 'Analytics is not configured. The website_visits table may be missing or inaccessible in Supabase. Run the SQL script at database/create_website_visits_table.sql if needed.';
+                } else {
+                    warningEl.classList.add('d-none');
+                }
+
+                if (analyticsError) {
+                    console.error('One or more visitor statistics queries failed. Check that the website_visits table exists and is accessible in Supabase.');
+                }
             } catch (err) {
                 console.error('Error loading visitor stats:', err);
+                dailyEl.textContent = weeklyEl.textContent = monthlyEl.textContent = yearlyEl.textContent = 'N/A';
             }
         }
 

@@ -78,7 +78,7 @@
                     .from('applications')
                     .select(`
                         *,
-                        vehicles:vehicle_id (name, type, year)
+                        vehicles:vehicle_id (name, type, year, monthly_payment)
                     `)
                     .eq('id', appId)
                     .single();
@@ -176,6 +176,15 @@
                             </div>
                         </div>
 
+                        <div class="card border-0 shadow-sm rounded-4 mb-4">
+                            <div class="card-header bg-white border-0 pt-4 px-4">
+                                <h5 class="fw-bold mb-0"><i class="bi bi-list-task me-2 text-primary"></i>Payment Schedule & Mark Payments</h5>
+                            </div>
+                            <div class="card-body p-4" id="paymentScheduleArea">
+                                <p class="text-muted">Loading payment schedule...</p>
+                            </div>
+                        </div>
+
                         ${app.status === 'pending' ? `
                             <div class="card border-0 shadow-sm rounded-4">
                                 <div class="card-body p-4">
@@ -201,6 +210,7 @@
                     </div>
                 </div>
             `;
+            buildPaymentSchedule(app);
         }
 
         async function updateStatus(id, action) {
@@ -234,6 +244,92 @@
                 alertMsg.innerHTML = `<i class="bi bi-exclamation-triangle me-2"></i>${err.message} <button type="button" class="btn-close" data-bs-dismiss="alert"></button>`;
                 alertMsg.classList.remove('d-none');
             }
+        }
+
+        function buildPaymentSchedule(app) {
+            const wrapper = document.getElementById('paymentScheduleArea');
+            const monthly = app.monthly_payment || (app.vehicles ? app.vehicles.monthly_payment : null) || 0;
+            const createdAt = new Date(app.created_at);
+            const firstDue = new Date(createdAt);
+            firstDue.setDate(firstDue.getDate() + 30);
+
+            // Ensure installments_paid array exists
+            let installments = Array.isArray(app.installments_paid) ? app.installments_paid.slice() : (app.installments_paid || []);
+            if (installments.length < 18) {
+                for (let i = installments.length; i < 18; i++) installments[i] = false;
+            }
+
+            wrapper.innerHTML = '';
+
+            const adminRow = document.createElement('div');
+            adminRow.className = 'd-flex align-items-center gap-3 mb-3';
+            adminRow.innerHTML = `
+                <div>
+                    <strong>Administration Fee</strong>
+                    <div class="text-muted small">US $30.00</div>
+                </div>
+                <div class="ms-auto">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="adminFeePaidCheckbox" ${app.admin_fee_paid ? 'checked' : ''}>
+                        <label class="form-check-label" for="adminFeePaidCheckbox">Mark as paid</label>
+                    </div>
+                </div>
+            `;
+            wrapper.appendChild(adminRow);
+
+            const table = document.createElement('div');
+            table.innerHTML = '<div class="table-responsive"><table class="table table-sm mt-3"><thead><tr><th>Installment</th><th>Amount</th><th>Due Date</th><th>Status</th></tr></thead><tbody id="installmentsBody"></tbody></table></div>';
+            wrapper.appendChild(table);
+
+            const tbody = document.getElementById('installmentsBody');
+            tbody.innerHTML = '';
+            for (let i = 0; i < 18; i++) {
+                const due = new Date(firstDue);
+                due.setMonth(due.getMonth() + i);
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>Month ${i + 1}</td>
+                    <td>US $${Number(monthly).toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})}</td>
+                    <td>${due.toLocaleDateString()}</td>
+                    <td>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input installment-checkbox" data-index="${i}" type="checkbox" ${installments[i] ? 'checked' : ''}>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            }
+
+            // Handlers
+            document.getElementById('adminFeePaidCheckbox').addEventListener('change', async (e) => {
+                const checked = e.target.checked;
+                try {
+                    const { error } = await supabaseClient.from('applications').update({ admin_fee_paid: checked }).eq('id', app.id);
+                    if (error) throw error;
+                    alert('Administration fee status updated.');
+                } catch (err) {
+                    alert('Failed to update admin fee status: ' + (err.message || err));
+                    e.target.checked = !checked;
+                }
+            });
+
+            document.querySelectorAll('.installment-checkbox').forEach(cb => {
+                cb.addEventListener('change', async (e) => {
+                    const idx = Number(e.target.dataset.index);
+                    // refresh installments array
+                    let current = Array.isArray(installments) ? installments.slice() : [];
+                    if (current.length < 18) for (let k = current.length; k < 18; k++) current[k] = false;
+                    current[idx] = e.target.checked;
+                    try {
+                        const { error } = await supabaseClient.from('applications').update({ installments_paid: current }).eq('id', app.id);
+                        if (error) throw error;
+                        alert(`Installment ${idx + 1} updated.`);
+                    } catch (err) {
+                        alert('Failed to update installment status: ' + (err.message || err));
+                        e.target.checked = !e.target.checked;
+                    }
+                });
+            });
         }
 
         // Logout
