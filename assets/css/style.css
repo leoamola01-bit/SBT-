@@ -5870,7 +5870,7 @@ body {
 
 /* ===== RESPONSIVE ===== */
 @media (max-width: 991px) {
-    .hero-section { text-align: center; }
+    .hero-section { text-align: center; min-height: calc(100vh - 80px); padding-top: 80px; }
     .hero-content { margin-bottom: 40px; }
     .hero-content .d-flex { justify-content: center; }
     .floating-badge { display: none; }
