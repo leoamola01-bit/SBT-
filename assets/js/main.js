@@ -191,37 +191,41 @@ function showVehicleDetails(vehicle) {
   });
   
   // Add swipe functionality to detail slider
-  let touchStartX = 0;
-  let touchEndX = 0;
-  
-  sliderContainer.addEventListener('touchstart', (e) => {
-    touchStartX = e.changedTouches[0].screenX;
-  }, false);
-  
-  sliderContainer.addEventListener('touchend', (e) => {
-    touchEndX = e.changedTouches[0].screenX;
-    handleDetailSwipe();
-  }, false);
-  
-  function handleDetailSwipe() {
-    const slides = sliderContainer.querySelectorAll('.slide');
-    const activeSlide = sliderContainer.querySelector('.slide.active');
-    const currentIdx = parseInt(activeSlide?.dataset.index) || 0;
-    
-    const swipeThreshold = 50;
-    const diff = touchStartX - touchEndX;
-    
-    if (Math.abs(diff) > swipeThreshold) {
-      let nextIdx;
-      if (diff > 0) {
-        // Swiped left - show next image
-        nextIdx = currentIdx === slides.length - 1 ? 0 : currentIdx + 1;
-      } else {
-        // Swiped right - show previous image
-        nextIdx = currentIdx === 0 ? slides.length - 1 : currentIdx - 1;
+  if (!sliderContainer.__detailSwipeInitialized) {
+    let touchStartX = 0;
+    let touchEndX = 0;
+
+    const onDetailTouchStart = (e) => {
+      touchStartX = e.changedTouches[0].screenX;
+    };
+
+    const onDetailTouchEnd = (e) => {
+      touchEndX = e.changedTouches[0].screenX;
+      handleDetailSwipe();
+    };
+
+    const handleDetailSwipe = () => {
+      const slides = sliderContainer.querySelectorAll('.slide');
+      const activeSlide = sliderContainer.querySelector('.slide.active');
+      const currentIdx = parseInt(activeSlide?.dataset.index) || 0;
+
+      const swipeThreshold = 50;
+      const diff = touchStartX - touchEndX;
+
+      if (Math.abs(diff) > swipeThreshold) {
+        let nextIdx;
+        if (diff > 0) {
+          nextIdx = currentIdx === slides.length - 1 ? 0 : currentIdx + 1;
+        } else {
+          nextIdx = currentIdx === 0 ? slides.length - 1 : currentIdx - 1;
+        }
+        showDetailSlide(nextIdx);
       }
-      showDetailSlide(nextIdx);
-    }
+    };
+
+    sliderContainer.addEventListener('touchstart', onDetailTouchStart, false);
+    sliderContainer.addEventListener('touchend', onDetailTouchEnd, false);
+    sliderContainer.__detailSwipeInitialized = true;
   }
 
   // Update apply button link
