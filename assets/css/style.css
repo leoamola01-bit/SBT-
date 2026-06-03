@@ -1133,7 +1133,10 @@ body {
 
 @media (max-width: 768px) {
     .detail-slider-container {
-        min-height: 300px;
+        height: auto !important;
+        aspect-ratio: 16 / 9;
+        min-height: 220px;
+        max-height: 300px;
     }
 
     .detail-slider-container .slide {
