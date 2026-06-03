@@ -1131,6 +1131,23 @@ body {
     gap: 10px;
 }
 
+@media (max-width: 768px) {
+    .detail-slider-container {
+        min-height: 300px;
+    }
+
+    .detail-slider-container .slide {
+        background-size: contain;
+        background-position: center center;
+        background-repeat: no-repeat;
+    }
+
+    #detailThumbnails img {
+        width: 50px;
+        height: 50px;
+    }
+}
+
 #detailThumbnails img {
     width: 60px;
     height: 60px;
