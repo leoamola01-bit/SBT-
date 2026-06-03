@@ -154,6 +154,26 @@
 
                     <div id="vehicleAlert" class="alert d-none"></div>
 
+                    <!-- Primary image chooser modal -->
+                    <div class="modal fade" id="primaryImageModal" tabindex="-1" aria-labelledby="primaryImageModalLabel" aria-hidden="true">
+                        <div class="modal-dialog modal-xl modal-dialog-centered">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="primaryImageModalLabel">Set Front Image</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <p class="text-muted mb-4">Choose the image you want to display as the front/primary image for this vehicle.</p>
+                                    <div id="primaryImageModalBody" class="row g-3"></div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                    <button type="button" class="btn btn-primary" id="savePrimaryImageBtn">Save Front Image</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="row g-4">
                         <div class="col-lg-5">
                             <div class="card border-0 shadow-sm rounded-4 h-100">
@@ -209,7 +229,7 @@
                                         <div class="mb-3">
                                             <label class="form-label">Vehicle Images (Max 10)</label>
                                             <input type="file" id="vehicleImages" class="form-control" multiple accept="image/*" onchange="previewImages()">
-                                            <div class="form-text">Select up to 10 images. First image will be the primary image.</div>
+                                            <div class="form-text">Select up to 10 images. Click one preview image to mark it as the front/primary image.</div>
                                             <div id="imagePreview" class="mt-2 d-flex flex-wrap gap-2"></div>
                                         </div>
                                         <button type="submit" class="btn btn-primary w-100">
@@ -241,6 +261,8 @@
     <script>
         let allApplications = [];
         let currentFilter = 'all';
+        let previewPrimaryIndex = 0;
+        const vehiclePrimaryImages = {};
 
         // Check auth
         async function checkAuth() {
@@ -294,6 +316,7 @@
                 }
 
                 grid.innerHTML = vehicles.map(vehicle => {
+                    vehiclePrimaryImages[vehicle.id] = vehicle.vehicle_images || [];
                     const primaryImg = vehicle.vehicle_images?.find(img => img.is_primary)?.image_url
                         || vehicle.vehicle_images?.[0]?.image_url
                         || 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22600%22 height=%22400%22 viewBox=%220 0 600 400%22%3E%3Crect width=%22600%22 height=%22400%22 fill=%22%23eceff4%22/%3E%3Ctext x=%2250%25%22 y=%2252%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 fill=%22%23999%22 font-family=%22Arial,sans-serif%22 font-size=%2224%22%3ENo Image Available%3C/text%3E%3C/svg%3E';
@@ -322,12 +345,15 @@
                                                 <span class="badge bg-secondary">${vehicle.transmission || 'Trans N/A'}</span>
                                                 <span class="badge bg-secondary">${vehicle.mileage || 'Mileage N/A'}</span>
                                             </div>
-                                            <div class="d-flex justify-content-between align-items-center">
+                                            <div class="d-flex justify-content-between align-items-center mb-3">
                                                 <div>
                                                     <strong class="h6 mb-0">$${Number(vehicle.price).toLocaleString()}</strong>
                                                     <div class="text-muted small">$${Number(vehicle.monthly_payment).toLocaleString()}/mo</div>
                                                 </div>
                                                 <span class="badge bg-success">On Sale</span>
+                                            </div>
+                                            <div class="d-flex gap-2 flex-wrap">
+                                                ${vehicle.vehicle_images?.length > 1 ? `<button class="btn btn-sm btn-outline-primary" onclick="openPrimaryImageModal(${vehicle.id})"><i class="bi bi-card-image me-1"></i>Set Front Image</button>` : ''}
                                             </div>
                                         </div>
                                     </div>
@@ -338,6 +364,72 @@
             } catch (err) {
                 console.error('Error loading vehicles for admin:', err);
                 grid.innerHTML = '<div class="col-12 text-center py-5 text-danger">Failed to load vehicles for admin.</div>';
+            }
+        }
+
+        function openPrimaryImageModal(vehicleId) {
+            const images = vehiclePrimaryImages[vehicleId] || [];
+            if (!images.length) return;
+
+            const modalBody = document.getElementById('primaryImageModalBody');
+            const selectedImageId = images.find(img => img.is_primary)?.id || images[0].id;
+            modalBody.innerHTML = images.map(image => `
+                <div class="col-md-4">
+                    <div class="modal-image-option${image.id === selectedImageId ? ' selected' : ''}" data-image-id="${image.id}" onclick="selectPrimaryImageOption(${image.id})">
+                        <img src="${image.image_url}" alt="Vehicle image" class="img-fluid rounded-4">
+                        <div class="image-label">${image.id === selectedImageId ? 'Current Front' : 'Set as Front'}</div>
+                    </div>
+                </div>
+            `).join('');
+
+            const saveButton = document.getElementById('savePrimaryImageBtn');
+            saveButton.onclick = async () => {
+                const selectedOption = modalBody.querySelector('.modal-image-option.selected');
+                if (!selectedOption) return;
+                const selectedId = Number(selectedOption.dataset.imageId);
+                await setPrimaryImage(vehicleId, selectedId);
+                bootstrap.Modal.getInstance(document.getElementById('primaryImageModal'))?.hide();
+            };
+
+            const modal = new bootstrap.Modal(document.getElementById('primaryImageModal'));
+            modal.show();
+        }
+
+        function selectPrimaryImageOption(imageId) {
+            document.querySelectorAll('#primaryImageModalBody .modal-image-option').forEach(option => {
+                option.classList.toggle('selected', Number(option.dataset.imageId) === imageId);
+                const label = option.querySelector('.image-label');
+                if (label) {
+                    label.textContent = Number(option.dataset.imageId) === imageId ? 'Current Front' : 'Set as Front';
+                }
+            });
+        }
+
+        async function setPrimaryImage(vehicleId, imageId) {
+            const alert = document.getElementById('vehicleAlert');
+            alert.className = 'alert alert-info';
+            alert.textContent = 'Updating front image...';
+
+            try {
+                const { error: resetError } = await supabaseClient
+                    .from('vehicle_images')
+                    .update({ is_primary: false })
+                    .eq('vehicle_id', vehicleId);
+                if (resetError) throw resetError;
+
+                const { error: setError } = await supabaseClient
+                    .from('vehicle_images')
+                    .update({ is_primary: true })
+                    .eq('id', imageId);
+                if (setError) throw setError;
+
+                alert.className = 'alert alert-success';
+                alert.textContent = 'Front image updated successfully.';
+                loadVehiclesForAdmin();
+            } catch (err) {
+                console.error('Error updating front image:', err);
+                alert.className = 'alert alert-danger';
+                alert.textContent = err.message || 'Failed to update front image.';
             }
         }
 
@@ -449,7 +541,7 @@
                             imageUrls.push({
                                 vehicle_id: newVehicle.id,
                                 image_url: publicUrl,
-                                is_primary: i === 0
+                                is_primary: i === previewPrimaryIndex
                             });
                         }
 
@@ -471,6 +563,7 @@
                 alert.className = 'alert alert-success';
                 alert.textContent = `Vehicle added successfully${files.length > 0 ? ` with ${files.length} image(s)` : ''} and is now visible to viewers.`;
                 document.getElementById('vehicleForm').reset();
+                previewPrimaryIndex = 0;
                 document.getElementById('imagePreview').innerHTML = '';
                 loadVehiclesForAdmin();
             } catch (err) {
@@ -540,19 +633,30 @@
             const preview = document.getElementById('imagePreview');
             const files = Array.from(input.files);
 
+            if (previewPrimaryIndex >= files.length) {
+                previewPrimaryIndex = 0;
+            }
             if (files.length > 10) {
                 alert('Maximum 10 images allowed');
                 input.value = '';
+                previewPrimaryIndex = 0;
                 preview.innerHTML = '';
                 return;
             }
 
             preview.innerHTML = files.map((file, index) => `
-                <div class="position-relative">
-                    <img src="${URL.createObjectURL(file)}" class="img-thumbnail" style="width: 80px; height: 80px; object-fit: cover;">
-                    <span class="badge bg-primary position-absolute top-0 start-0">${index + 1}</span>
+                <div class="image-preview-item${index === previewPrimaryIndex ? ' selected' : ''}" onclick="setPreviewPrimary(${index})">
+                    <img src="${URL.createObjectURL(file)}" class="img-thumbnail" alt="Preview ${index + 1}">
+                    <span class="preview-badge bg-${index === previewPrimaryIndex ? 'success' : 'secondary'} position-absolute top-0 start-0">
+                        ${index === previewPrimaryIndex ? 'Front' : index + 1}
+                    </span>
                 </div>
             `).join('');
+        }
+
+        function setPreviewPrimary(index) {
+            previewPrimaryIndex = index;
+            previewImages();
         }
 
         function updateStats() {
