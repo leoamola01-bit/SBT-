@@ -174,7 +174,7 @@ function showVehicleDetails(vehicle) {
   // Populate images
   const sliderContainer = document.getElementById('detailSlider');
   sliderContainer.innerHTML = allImages.map((img, idx) => 
-    `<div class="slide ${idx === 0 ? 'active' : ''}" style="background-image: url('${img}')"></div>`
+    `<div class="slide ${idx === 0 ? 'active' : ''}" style="background-image: url('${img}')" data-index="${idx}"></div>`
   ).join('');
 
   const thumbnailsContainer = document.getElementById('detailThumbnails');
@@ -186,20 +186,85 @@ function showVehicleDetails(vehicle) {
   document.querySelectorAll('.detail-thumbnail').forEach(thumb => {
     thumb.addEventListener('click', () => {
       const idx = parseInt(thumb.dataset.index);
-      const slides = sliderContainer.querySelectorAll('.slide');
-      document.querySelectorAll('.detail-thumbnail').forEach(t => t.classList.remove('active'));
-      slides.forEach(s => s.classList.remove('active'));
-      thumb.classList.add('active');
-      if (slides[idx]) slides[idx].classList.add('active');
+      showDetailSlide(idx);
     });
   });
+  
+  // Add swipe functionality to detail slider
+  let touchStartX = 0;
+  let touchEndX = 0;
+  
+  sliderContainer.addEventListener('touchstart', (e) => {
+    touchStartX = e.changedTouches[0].screenX;
+  }, false);
+  
+  sliderContainer.addEventListener('touchend', (e) => {
+    touchEndX = e.changedTouches[0].screenX;
+    handleDetailSwipe();
+  }, false);
+  
+  function handleDetailSwipe() {
+    const slides = sliderContainer.querySelectorAll('.slide');
+    const activeSlide = sliderContainer.querySelector('.slide.active');
+    const currentIdx = parseInt(activeSlide?.dataset.index) || 0;
+    
+    const swipeThreshold = 50;
+    const diff = touchStartX - touchEndX;
+    
+    if (Math.abs(diff) > swipeThreshold) {
+      let nextIdx;
+      if (diff > 0) {
+        // Swiped left - show next image
+        nextIdx = currentIdx === slides.length - 1 ? 0 : currentIdx + 1;
+      } else {
+        // Swiped right - show previous image
+        nextIdx = currentIdx === 0 ? slides.length - 1 : currentIdx - 1;
+      }
+      showDetailSlide(nextIdx);
+    }
+  }
 
   // Update apply button link
   document.getElementById('detailApplyBtn').href = `apply.html?vehicle=${vehicle.id}`;
 
   // Show modal
   const modal = new bootstrap.Modal(document.getElementById('vehicleDetailsModal'));
+  
+  // Push history state for back button support
+  history.pushState({ vehicleDetailsOpen: true }, '', window.location.href);
+  
+  // Handle back button
+  const handlePopState = (e) => {
+    if (e.state?.vehicleDetailsOpen) {
+      // This is our modal state, don't do anything (we'll handle it on next back)
+      return;
+    }
+    // Back button pressed, close modal
+    modal.hide();
+    window.removeEventListener('popstate', handlePopState);
+  };
+  
+  window.addEventListener('popstate', handlePopState);
+  
+  // Clean up event listener when modal closes
+  document.getElementById('vehicleDetailsModal').addEventListener('hidden.bs.modal', () => {
+    window.removeEventListener('popstate', handlePopState);
+  }, { once: true });
+  
   modal.show();
+}
+
+// Helper function to update detail slide
+function showDetailSlide(idx) {
+  const sliderContainer = document.getElementById('detailSlider');
+  const slides = sliderContainer.querySelectorAll('.slide');
+  const thumbnails = document.querySelectorAll('.detail-thumbnail');
+  
+  slides.forEach(s => s.classList.remove('active'));
+  thumbnails.forEach(t => t.classList.remove('active'));
+  
+  if (slides[idx]) slides[idx].classList.add('active');
+  if (thumbnails[idx]) thumbnails[idx].classList.add('active');
 }
 
 // --- IMAGE SLIDER ---
