@@ -213,13 +213,11 @@ function showVehicleDetails(vehicle) {
       const diff = touchStartX - touchEndX;
 
       if (Math.abs(diff) > swipeThreshold) {
-        let nextIdx;
-        if (diff > 0) {
-          nextIdx = currentIdx === slides.length - 1 ? 0 : currentIdx + 1;
-        } else {
-          nextIdx = currentIdx === 0 ? slides.length - 1 : currentIdx - 1;
+        if (diff > 0 && currentIdx < slides.length - 1) {
+          showDetailSlide(currentIdx + 1);
+        } else if (diff < 0 && currentIdx > 0) {
+          showDetailSlide(currentIdx - 1);
         }
-        showDetailSlide(nextIdx);
       }
     };
 
