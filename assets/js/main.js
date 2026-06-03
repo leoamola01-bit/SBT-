@@ -43,16 +43,23 @@ async function loadVehicles(filter = 'all', search = '') {
     console.log('Found', vehicles.length, 'vehicles');
     grid.innerHTML = '';
     vehicles.forEach(vehicle => {
+      const placeholderImage = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="800" height="500" viewBox="0 0 800 500"%3E%3Crect width="800" height="500" fill="%23f3f4f8"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" fill="%23999" font-family="Arial,sans-serif" font-size="32"%3ENo Image Available%3C/text%3E%3C/svg%3E';
+      
+      // Get all valid images
       const validImages = vehicle.vehicle_images?.map(i => i.image_url).filter(Boolean) || [];
       if (!validImages.length) {
         console.warn('Vehicle has no images:', vehicle.id);
       }
-      const placeholderImage = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="800" height="500" viewBox="0 0 800 500"%3E%3Crect width="800" height="500" fill="%23f3f4f8"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" fill="%23999" font-family="Arial,sans-serif" font-size="32"%3ENo Image Available%3C/text%3E%3C/svg%3E';
-      const primaryImg = validImages.find((_, idx) => vehicle.vehicle_images[idx]?.is_primary)
-        || validImages[0]
-        || placeholderImage;
-
-      const allImages = validImages.length ? validImages : [primaryImg];
+      
+      // Find primary image and prioritize it first
+      const primaryImageObj = vehicle.vehicle_images?.find(i => i.is_primary);
+      const primaryImg = primaryImageObj?.image_url || validImages[0] || placeholderImage;
+      
+      // Reorder images so primary comes first
+      let allImages = validImages.length ? validImages : [primaryImg];
+      if (primaryImageObj && validImages.length > 1) {
+        allImages = [primaryImg, ...allImages.filter(img => img !== primaryImg)];
+      }
 
       const col = document.createElement('div');
       col.className = 'col-lg-4 col-md-6';
@@ -126,9 +133,20 @@ function initVehicleDetailsModal(vehicles) {
 }
 
 function showVehicleDetails(vehicle) {
-  const validImages = vehicle.vehicle_images?.map(i => i.image_url).filter(Boolean) || [];
   const placeholderImage = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="800" height="500" viewBox="0 0 800 500"%3E%3Crect width="800" height="500" fill="%23f3f4f8"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" fill="%23999" font-family="Arial,sans-serif" font-size="32"%3ENo Image Available%3C/text%3E%3C/svg%3E';
-  const allImages = validImages.length ? validImages : [placeholderImage];
+  
+  // Get all valid images
+  const validImages = vehicle.vehicle_images?.map(i => i.image_url).filter(Boolean) || [];
+  
+  // Find primary image and prioritize it first
+  const primaryImageObj = vehicle.vehicle_images?.find(i => i.is_primary);
+  const primaryImg = primaryImageObj?.image_url || validImages[0] || placeholderImage;
+  
+  // Reorder images so primary comes first
+  let allImages = validImages.length ? validImages : [placeholderImage];
+  if (primaryImageObj && validImages.length > 1) {
+    allImages = [primaryImg, ...allImages.filter(img => img !== primaryImg)];
+  }
 
   // Populate modal content
   document.getElementById('vehicleDetailsTitle').textContent = vehicle.name;
