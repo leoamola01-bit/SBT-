@@ -111,6 +111,123 @@ async function loadVehicles(filter = 'all', search = '') {
   }
 }
 
+async function loadTestimonials() {
+  const container = document.getElementById('testimonialCards');
+  if (!container || !window.supabaseClient) return;
+  try {
+    const { data, error } = await window.supabaseClient
+      .from('testimonials')
+      .select('*')
+      .eq('status', 'approved')
+      .order('created_at', { ascending: false })
+      .limit(6);
+    if (error) throw error;
+    renderTestimonialCards(data || []);
+  } catch (err) {
+    // Provide structured logging to help diagnose Supabase / network errors
+    console.error('Error loading testimonials:', err);
+    try {
+      // Supabase returns an object with helpful fields
+      if (err && typeof err === 'object') {
+        console.error('Supabase error details: status=', err.status, 'message=', err.message, 'details=', err.details, 'hint=', err.hint);
+      }
+    } catch (logErr) {
+      console.error('Failed to extract error details:', logErr);
+    }
+
+    // Show a clearer message to users and hint at a missing DB table when applicable
+    const userMessage = (err && err.status === 404)
+      ? 'Reviews not available (database table may be missing).'
+      : (err && err.message) ? `Unable to load reviews: ${err.message}` : 'Unable to load reviews right now.';
+
+    container.innerHTML = `<div class="col-12 text-center py-5 text-danger"><i class="bi bi-exclamation-triangle-fill fs-1"></i><p class="mt-3 mb-0">${userMessage}</p></div>`;
+  }
+}
+
+function renderTestimonialCards(testimonials) {
+  const container = document.getElementById('testimonialCards');
+  if (!container) return;
+  if (!testimonials.length) {
+    container.innerHTML = '<div class="col-12 text-center py-5 text-muted"><i class="bi bi-star-half fs-1"></i><p class="mt-3 mb-0">No reviews are published yet.</p></div>';
+    return;
+  }
+  container.innerHTML = testimonials.map(testimonial => {
+    const stars = Array.from({ length: 5 }, (_, index) => `
+      <i class="bi ${index < testimonial.rating ? 'bi-star-fill' : 'bi-star'} text-warning"></i>
+    `).join('');
+    return `
+      <div class="col-md-6">
+        <div class="testimonial-card p-4 bg-white rounded-4 shadow-sm h-100">
+          <div class="stars mb-3">${stars}</div>
+          <p class="mb-4">"${testimonial.comment.replace(/</g, '&lt;').replace(/>/g, '&gt;')}"</p>
+          <div class="d-flex align-items-center">
+            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width:45px;height:45px;font-weight:bold;">${testimonial.name.trim().split(' ').map(n => n[0]?.toUpperCase()).slice(0,2).join('')}</div>
+            <div class="ms-3">
+              <h6 class="mb-0">${testimonial.name}</h6>
+              <small class="text-muted">${new Date(testimonial.created_at).toLocaleDateString()}</small>
+            </div>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function initTestimonialForm() {
+  const form = document.getElementById('testimonialForm');
+  const messageEl = document.getElementById('testimonialMessage');
+  if (!form) return;
+
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    if (!window.supabaseClient) return;
+
+    const name = document.getElementById('testimonialName')?.value.trim();
+    const rating = parseInt(document.getElementById('testimonialRating')?.value, 10);
+    const comment = document.getElementById('testimonialComment')?.value.trim();
+
+    if (!name || !rating || !comment) {
+      if (messageEl) {
+        messageEl.textContent = 'Please complete all fields before submitting.';
+        messageEl.classList.remove('d-none');
+        messageEl.classList.add('text-danger');
+      }
+      return;
+    }
+
+    const button = form.querySelector('button[type="submit"]');
+    const originalLabel = button?.innerHTML;
+    if (button) {
+      button.disabled = true;
+      button.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Submitting...';
+    }
+
+    try {
+      const { error } = await window.supabaseClient
+        .from('testimonials')
+        .insert([{ name, rating, comment, status: 'pending_review' }]);
+      if (error) throw error;
+      form.reset();
+      if (messageEl) {
+        messageEl.textContent = 'Thank you! Your review has been submitted for approval.';
+        messageEl.classList.remove('d-none', 'text-danger');
+        messageEl.classList.add('text-success');
+      }
+    } catch (err) {
+      console.error('Error submitting testimonial:', err);
+      if (messageEl) {
+        messageEl.textContent = 'Unable to submit your review. Please try again later.';
+        messageEl.classList.remove('d-none');
+        messageEl.classList.add('text-danger');
+      }
+    } finally {
+      if (button) {
+        button.disabled = false;
+        button.innerHTML = originalLabel || 'Submit Review';
+      }
+    }
+  });
+}
+
 // --- VEHICLE DETAILS MODAL ---
 function initVehicleDetailsModal(vehicles) {
   const vehicleMap = {};
@@ -340,6 +457,8 @@ document.addEventListener('DOMContentLoaded', () => {
   loadVehicles();
   initApplicationForm();
   initStatusCheck();
+  loadTestimonials();
+  initTestimonialForm();
   renderApplicationNumberOnSuccess();
   trackWebsiteVisit();
 });

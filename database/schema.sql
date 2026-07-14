@@ -88,6 +88,19 @@ create index if not exists applications_status_idx on public.applications(status
 create index if not exists applications_created_at_idx on public.applications(created_at desc);
 create unique index if not exists applications_application_number_idx on public.applications(application_number);
 
+-- Testimonials Table
+create table if not exists public.testimonials (
+  id bigint primary key generated always as identity,
+  name varchar(100) not null,
+  rating integer not null check (rating between 1 and 5),
+  comment text not null,
+  status text default 'pending_review' check (status in ('pending_review', 'approved', 'rejected')),
+  created_at timestamp with time zone default timezone('utc'::text, now())
+);
+
+create index if not exists testimonials_status_idx on public.testimonials(status);
+create index if not exists testimonials_created_at_idx on public.testimonials(created_at desc);
+
 -- Sample Data - Vehicles
 insert into public.vehicles (name, type, engine_capacity, year, fuel_type, transmission, mileage, price, monthly_payment, description) 
 values 

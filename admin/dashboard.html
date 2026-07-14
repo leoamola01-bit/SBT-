@@ -141,6 +141,44 @@
                     </div>
                 </div>
 
+                <section id="testimonialManagementSection" class="mt-5">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <div>
+                            <h3 class="fw-bold"><i class="bi bi-chat-dots-fill me-2"></i>Manage Reviews</h3>
+                            <p class="text-muted mb-0">Approve or delete reviews before they appear on the public homepage.</p>
+                        </div>
+                        <button class="btn btn-outline-primary" onclick="refreshTestimonials()">
+                            <i class="bi bi-arrow-clockwise me-1"></i> Refresh Reviews
+                        </button>
+                    </div>
+
+                    <div class="card border-0 shadow-sm rounded-4">
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>#</th>
+                                            <th>Name</th>
+                                            <th>Rating</th>
+                                            <th>Comment</th>
+                                            <th>Date</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="testimonialsTableBody">
+                                        <tr>
+                                            <td colspan="6" class="text-center py-4 text-muted">
+                                                <i class="bi bi-hourglass-split me-2"></i>Loading reviews...
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
                 <section id="vehicleManagementSection" class="mt-5">
                     <div class="d-flex justify-content-between align-items-center mb-4">
                         <div>
@@ -781,7 +819,88 @@
 
         // Refresh
         async function refreshData() {
-            await Promise.all([loadApplications(), loadVehiclesForAdmin(), loadVisitorStats()]);
+            await Promise.all([loadApplications(), loadVehiclesForAdmin(), loadVisitorStats(), loadTestimonialsForAdmin()]);
+        }
+
+        async function refreshTestimonials() {
+            await loadTestimonialsForAdmin();
+        }
+
+        function refreshVehicles() {
+            loadVehiclesForAdmin();
+        }
+
+        let pendingTestimonials = [];
+
+        async function loadTestimonialsForAdmin() {
+            const tbody = document.getElementById('testimonialsTableBody');
+            if (!tbody) return;
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4"><div class="spinner-border text-primary" role="status"></div> Loading reviews...</td></tr>';
+            try {
+                const { data, error } = await supabaseClient
+                    .from('testimonials')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+                if (error) throw error;
+                pendingTestimonials = data || [];
+                renderTestimonialsForAdmin();
+            } catch (err) {
+                console.error('Error loading testimonials for admin:', err);
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-danger">Failed to load reviews.</td></tr>';
+            }
+        }
+
+        function renderTestimonialsForAdmin() {
+            const tbody = document.getElementById('testimonialsTableBody');
+            if (!tbody) return;
+            if (!pendingTestimonials.length) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-muted">No reviews found.</td></tr>';
+                return;
+            }
+            tbody.innerHTML = pendingTestimonials.map(testimonial => {
+                const stars = Array.from({ length: 5 }, (_, idx) => `<i class="bi ${idx < testimonial.rating ? 'bi-star-fill' : 'bi-star'} text-warning"></i>`).join('');
+                const statusText = testimonial.status === 'approved' ? 'Approved' : testimonial.status === 'rejected' ? 'Rejected' : 'Pending';
+                const statusClass = testimonial.status === 'approved' ? 'success' : testimonial.status === 'rejected' ? 'danger' : 'warning';
+                const approveButton = testimonial.status === 'approved'
+                    ? '<button class="btn btn-sm btn-outline-success me-1" disabled><i class="bi bi-check2-circle"></i></button>'
+                    : `<button class="btn btn-sm btn-success me-1" onclick="approveTestimonial(${testimonial.id})"><i class="bi bi-check2-circle"></i></button>`;
+                return `
+                    <tr>
+                        <td>${testimonial.id}</td>
+                        <td>${testimonial.name}</td>
+                        <td>${stars}</td>
+                        <td>${testimonial.comment.length > 120 ? testimonial.comment.slice(0, 120) + '…' : testimonial.comment}</td>
+                        <td>${new Date(testimonial.created_at).toLocaleDateString()} <span class="badge bg-${statusClass} ms-2">${statusText}</span></td>
+                        <td class="text-nowrap">
+                            ${approveButton}
+                            <button class="btn btn-sm btn-danger" onclick="deleteTestimonial(${testimonial.id})"><i class="bi bi-trash"></i></button>
+                        </td>
+                    </tr>`;
+            }).join('');
+        }
+
+        async function approveTestimonial(id) {
+            if (!confirm('Approve this review for publication?')) return;
+            try {
+                const { error } = await supabaseClient.from('testimonials').update({ status: 'approved' }).eq('id', id);
+                if (error) throw error;
+                await refreshData();
+            } catch (err) {
+                console.error('Error approving testimonial:', err);
+                alert('Unable to approve the review. Please try again.');
+            }
+        }
+
+        async function deleteTestimonial(id) {
+            if (!confirm('Delete this review permanently?')) return;
+            try {
+                const { error } = await supabaseClient.from('testimonials').delete().eq('id', id);
+                if (error) throw error;
+                await refreshData();
+            } catch (err) {
+                console.error('Error deleting testimonial:', err);
+                alert('Unable to delete the review. Please try again.');
+            }
         }
 
         // Logout
@@ -800,6 +919,7 @@
                 loadApplications();
                 loadVehiclesForAdmin();
                 loadVisitorStats();
+                loadTestimonialsForAdmin();
             }
         });
     </script>
